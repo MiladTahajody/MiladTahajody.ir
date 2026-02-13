@@ -22,6 +22,32 @@
     <meta name="viewport" content="width=device-width">
     <meta name="generator" content="Framer 0f6ce29">
     <title>Milad Tahajody</title>
+
+    <script>
+(function () {
+  const desiredTitle = "Milad Tahajody";
+  try { document.title = desiredTitle; } catch(e){}
+  try {
+    const head = document.head || document.getElementsByTagName('head')[0];
+    const titleEl = head.querySelector('title');
+    if (titleEl) {
+      const obs = new MutationObserver(() => {
+        if (titleEl.textContent !== desiredTitle) titleEl.textContent = desiredTitle;
+      });
+      obs.observe(titleEl, { childList: true, characterData: true, subtree: true });
+    }
+  } catch (e) {}
+  try {
+    Object.defineProperty(document, 'title', {
+      get: function() { return desiredTitle; },
+      set: function() {},
+      configurable: true
+    });
+  } catch (e) {}
+})();
+</script>
+
+    
     <meta name="description" content="Made with Framer">
     <meta name="framer-search-index"
         content="https://framerusercontent.com/sites/3bG9nxzB4eSIEbj9KFdR2w/searchIndex-Jr45KTiLUWtA.json">
