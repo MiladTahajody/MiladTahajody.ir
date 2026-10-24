@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- sitemap.xml for https://miladtahajody.ir/ (update the domain here if it changes) and update <lastmod> whenever the content changes.
+     One-page site: the home page is the main URL (the Services, Portfolio and other sections are parts of it). -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url>
+    <loc>https://miladtahajody.ir/</loc>
+    <lastmod>2026-10-23</lastmod>
+    <image:image>
+      <image:loc>https://miladtahajody.ir/images/profile.webp</image:loc>
+      <image:title>Milad Tahajody, Senior UI/UX Designer</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://miladtahajody.ir/cv/Milad-Tahajody-CV.pdf</loc>
+    <lastmod>2026-10-23</lastmod>
+  </url>
+</urlset>
