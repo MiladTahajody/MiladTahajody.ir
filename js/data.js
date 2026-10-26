@@ -1,3 +1,13 @@
+/* Portfolio data - edit freely. The order of the lines = the order on the page (also inside a filtered view).
+   Every project is one line with these items, in this order:
+   [ title, tagline (or ''), category, deliverable, tools, link, language, optional image file name ]
+   - category = the main tag. The filter chips above the portfolio are built from it automatically ("All" is first and selected by default).
+     Write exactly the same text for projects that belong together, e.g. 'Mobile App Design'. A new category text creates a new chip;
+     chips follow the order in which categories first appear in this list. About 5-7 categories keep the chip row tidy.
+   - image: images/portfolio/<title in lowercase with hyphens>.webp, ratio 3:2 (Hamro -> hamro.webp, Select Your Villa -> select-your-villa.webp).
+     The optional 8th item replaces that file name (without .webp).
+   - all text is plain text (HTML tags are not interpreted). Put a backslash before an apostrophe inside text: 'Chef\'s Menu'.
+   Example: ['My App', 'Short tagline (or empty)', 'Mobile App Design', 'Mobile App · Prototyped Mockups', 'Figma', 'https://link', 'EN'] */
 window.PORTFOLIO = [
   ['Digital Menus', 'Cafés | Restaurants | Fast-Food | Bakeries', 'Web Responsive', 'Web Responsive / Mobile', 'Idea - Design - Development', 'https://digitalmenus.ir', 'English / Farsi'],
   ['Select Your Villa', 'Inclusive Villa Design Service', 'Web Responsive', 'Web Responsive / Mobile / Dashboard Panel', 'Analysis - Design', 'https://xd.adobe.com/view/b9dfe331-6dc2-40b3-ac0d-9e2f4a151242-ec8c/?fullscreen', 'English'],
