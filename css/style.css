@@ -230,6 +230,10 @@ footer{padding:12vh 6vw 4vh;border-top:1px solid var(--line)}
 .work.stack .filters{position:sticky;top:var(--navh,96px);z-index:40;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding:10px 5vw;margin:0 0 14px;background:var(--navbg);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
 .work.stack .filters::-webkit-scrollbar{display:none}
 
+/* ===== Footer social pills on phones: always a fixed 3 x 3 grid (LinkedIn Behance Dribbble / Facebook Instagram Threads / X Pinterest YouTube), the same on every phone ===== */
+@media (max-width:640px){.soc{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.soc a{justify-content:center;gap:6px;padding:9px 6px;font-size:.62rem;white-space:nowrap;min-width:0}.soc a .ic{width:15px;height:15px}}
+@media (max-width:340px){.soc a{gap:4px;padding:9px 4px;font-size:.56rem}.soc a .ic{width:13px;height:13px}}
+
 /* ===== Footer bottom bar on phones: left column = copyright + email, right column = CV link + back to top ===== */
 @media (max-width:640px){.f-bar{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"cc cv" "mail top";gap:14px 16px;align-items:center}.fb-cc{grid-area:cc}.fb-mail{grid-area:mail;min-width:0;overflow-wrap:anywhere}.fb-cv{grid-area:cv;justify-self:end}.fb-top{grid-area:top;justify-self:end}}
 
@@ -240,7 +244,7 @@ footer{padding:12vh 6vw 4vh;border-top:1px solid var(--line)}
   .nav{flex-wrap:wrap;gap:8px 12px;padding:10px 4vw 8px;background:var(--navbg);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
   .logo{order:1;margin-right:auto}.actions{order:2}
   .nav nav{order:3;width:100%;overflow-x:auto;gap:8px;padding:2px 0 4px;scrollbar-width:none}.nav nav::-webkit-scrollbar{display:none}
-  .nav nav a{padding:7px 14px;border:1px solid var(--line);border-radius:99px;font-size:.72rem}
+  .nav nav a{flex:none;padding:7px 14px;border:1px solid var(--line);border-radius:99px;font-size:.72rem}
   .nav nav a.on{background:var(--acc);border-color:var(--acc);color:var(--on)}
   .work{padding-top:max(11vh,124px)} /* keeps the portfolio title clear of the taller header */
 }
