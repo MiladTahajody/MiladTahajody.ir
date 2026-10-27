@@ -39,7 +39,7 @@
     const [name, tag, cat0, what, tools, url, lang, file0] = p, cat = cat0 || 'Other', nn = String(i + 1).padStart(2, '0'), file = file0 || slug(name);
     return `<article class="card" data-cat="${esc(cat)}"><div class="in">
       <img class="th" src="images/portfolio/${esc(file)}.webp" width="1500" height="1000" alt="${esc(name)} preview" data-cat="${esc(cat)}" data-name="${esc(name)}">
-      <div class="tx"><span class="num">${nn}</span><span class="lg">${esc(lang)}</span><h3>${esc(name)}</h3>${tag ? `<p class="tag">${esc(tag)}</p>` : ''}<p>${esc(what)}</p><p>Tools: ${esc(tools)}</p>
+      <div class="tx"><span class="num">${nn}</span><span class="lg">${esc(lang)}</span><h3>${esc(name)}</h3>${tag ? `<p class="tag">${esc(tag)}</p>` : ''}<p>${esc(what)}</p><p>${esc(tools)}</p>
       <a href="${esc(url)}" target="_blank" rel="noopener">View prototype ↗</a></div></div></article>`;
   }).join('');
   $$('.th').forEach(img => { img.addEventListener('error', () => placeholder(img)); if (img.complete && !img.naturalWidth) placeholder(img); });
