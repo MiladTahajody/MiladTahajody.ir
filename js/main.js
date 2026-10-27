@@ -256,6 +256,8 @@
   const filtersEl = $('#filters'), stat = $('#fstat'), nav = $('.nav');
   const setNavH = () => root.style.setProperty('--navh', nav.offsetHeight + 'px'); // on phones the chip row sticks right under the header
   setNavH(); addEventListener('resize', setNavH);
+  // Safari can keep stale pill widths when the web fonts finish loading after the first layout: lay the header chips out again once fonts are ready
+  if (document.fonts) document.fonts.ready.then(() => { const n = $('.nav nav'); n.style.display = 'none'; void n.offsetHeight; n.style.display = ''; setNavH(); });
   const applyFilter = (label, byUser) => {
     const all = label === 'All';
     vis = cards.filter(c => { const ok = all || c.dataset.cat === label; c.hidden = !ok; return ok; });
