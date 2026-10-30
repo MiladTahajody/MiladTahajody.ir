@@ -389,7 +389,6 @@
     ScrollTrigger.batch('.svc', { start: 'top 92%', once: true, onEnter: b => gsap.to(b, { opacity: 1, y: 0, duration: 1, ease: 'power3.out', stagger: .1, clearProps: 'transform' }) });
   }
 
-
   const loader = $('.loader');
   if (reduce) { loader.remove(); goScene('hero', true); return; }
   const n = { v: 0 };
