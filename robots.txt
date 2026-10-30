@@ -1,7 +1,3 @@
-# robots.txt for https://miladtahajody.ir/ (if the domain changes, update the Sitemap line at the bottom).
-# Everything is open to search engines. The AI / answer-engine crawlers are listed explicitly so your intent is clear
-# and your portfolio can be found and cited by AI assistants. To block one of them, delete its User-agent line
-# and add a "Disallow: /" group for it.
 User-agent: *
 Allow: /
 
