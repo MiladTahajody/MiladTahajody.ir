@@ -1,13 +1,3 @@
-/* =====================================================================
-   Milad Tahajody - dark/light 3D CV + portfolio (static)
-   Two visual layers: (1) a 3D mesh-network object that morphs into a new shape (Earth globe, then the header icons) and turns
-   with the scroll (WebGL, Three.js; shapes in js/shapes.js), (2) a faint mesh texture behind the whole page (2D canvas).
-   Globals: THREE, gsap, ScrollTrigger, Lenis, PORTFOLIO (js/data.js), SHAPES (js/shapes.js)
-   Parts: 1) helpers + theme toggle  2) portfolio cards (category filter: part 5)  3) smooth scroll  3b) image zoom (lightbox)
-          4) 3D morphing object (NET settings)  4b) background mesh (BG settings)
-          5) scroll animations (panels, timeline, portfolio strip)  6) loader / intro
-   Content lives in index.html (CV text) and js/data.js (portfolio). This file = behaviour only.
-   ===================================================================== */
 (() => {
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const mqSmall = matchMedia('(max-width: 899px)'), isSmall = () => mqSmall.matches; // live breakpoint check (follows resize / rotate / DevTools device toggle)
