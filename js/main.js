@@ -1,49 +1,35 @@
-/* =====================================================================
-   Milad Tahajody - dark/light 3D CV + portfolio (static)
-   Two visual layers: (1) a 3D mesh-network object that morphs into a new shape (pentagon sphere, then the header icons) and turns
-   with the scroll (WebGL, Three.js; shapes in js/shapes.js), (2) a faint mesh texture behind the whole page (2D canvas).
-   Globals: THREE, gsap, ScrollTrigger, Lenis, PORTFOLIO (js/data.js), SHAPES (js/shapes.js)
-   Parts: 1) helpers + theme toggle  2) portfolio cards (category filter: part 5)  3) smooth scroll  3b) image zoom (lightbox)
-          4) 3D morphing object (NET settings)  4b) background mesh (BG settings)
-          5) scroll animations (panels, timeline, portfolio strip)  6) loader / intro
-   Content lives in index.html (CV text) and js/data.js (portfolio). This file = behaviour only.
-   ===================================================================== */
 (() => {
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const mqSmall = matchMedia('(max-width: 899px)'), isSmall = () => mqSmall.matches; // live breakpoint check (follows resize / rotate / DevTools device toggle)
-  // Tiny selectors: $('.x') = first match, $$('.x') = array of all matches
+  const mqSmall = matchMedia('(max-width: 899px)'), isSmall = () => mqSmall.matches;
+
   const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
-  gsap.registerPlugin(ScrollTrigger); // ScrollTrigger drives every scroll-linked animation
-  // After a reload the page always starts at the very top (the browser / ScrollTrigger must not restore the old scroll position)
+  gsap.registerPlugin(ScrollTrigger);
+ 
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
   ScrollTrigger.clearScrollMemory('manual'); scrollTo(0, 0);
 
-  /* ---------- 1) Helpers ---------- */
-  // root = the <html> element; the class 'light' on it switches the colour theme
   const root = document.documentElement, isLight = () => root.classList.contains('light');
-  let sceneTheme = () => {}; // filled in by the 3D part: re-colours the object when the theme changes
-  let bgTheme = () => {}; // re-reads the colours of the background mesh (set in part 4b)
-  // Light / dark toggle (dark is the default; choice is remembered)
+  let sceneTheme = () => {};
+  let bgTheme = () => {};
+
   $('#theme').addEventListener('click', () => {
     root.classList.add('theming'); const light = root.classList.toggle('light');
-    try { localStorage.setItem('theme', light ? 'light' : 'dark'); } catch (e) { /* storage blocked (private mode): the choice is simply not remembered */ }
+    try { localStorage.setItem('theme', light ? 'light' : 'dark'); } catch (e) {}
     sceneTheme(light); bgTheme(); setTimeout(() => root.classList.remove('theming'), 700);
   });
-  // Chips: turns data-tags="A|B|C" into <li> items
+  
   $$('[data-tags]').forEach(ul => { ul.innerHTML = ul.dataset.tags.split('|').map(t => `<li>${t}</li>`).join(''); });
-  // Footer year and the project total shown next to the portfolio counter
+
   $('#year').textContent = new Date().getFullYear();
   $('#tot').textContent = $('#cnt-tot').textContent = PORTFOLIO.length;
 
-  /* ---------- 2) Portfolio cards from js/data.js ---------- */
-  // Generated placeholder shown when images/portfolio/<name>.webp is missing
   function placeholder(img) {
     if (img.dataset.ph) return; img.dataset.ph = 1;
     const c = document.createElement('canvas'); c.width = 640; c.height = 427; const x = c.getContext('2d');
     const g = x.createLinearGradient(0, 0, 640, 400); g.addColorStop(0, '#1a1c24'); g.addColorStop(1, '#2a1409'); x.fillStyle = g; x.fillRect(0, 0, 640, 400);
     x.fillStyle = 'rgba(255,90,31,.85)';
     const box = (a, b, w, h, r) => { x.beginPath(); x.roundRect ? x.roundRect(a, b, w, h, r) : x.rect(a, b, w, h); x.fill(); };
-    const cat = (img.dataset.cat || '').toLowerCase(), k = /mobile|app/.test(cat) ? 'mobile' : /brand|print|logo|sticker|card/.test(cat) ? 'brand' : 'web'; // placeholder shape follows the category
+    const cat = (img.dataset.cat || '').toLowerCase(), k = /mobile|app/.test(cat) ? 'mobile' : /brand|print|logo|sticker|card/.test(cat) ? 'brand' : 'web';
     if (k === 'mobile') [150, 270, 390].forEach((a, n) => box(a - 50, 50 + n % 2 * 20, 100, 230, 16));
     else if (k === 'web') { box(90, 70, 460, 250, 14); x.fillStyle = 'rgba(8,9,12,.55)'; box(110, 95, 120, 205, 8); box(250, 95, 280, 60, 8); box(250, 170, 135, 130, 8); box(395, 170, 135, 130, 8); }
     else { x.beginPath(); x.arc(320, 190, 95, 0, 7); x.fill(); }
@@ -51,9 +37,9 @@
     x.fillText(img.dataset.name + ' · ' + img.getAttribute('src'), 24, 410);
     img.src = c.toDataURL();
   }
-  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); // data.js text is plain text, never HTML
-  const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''); // image file name from the title: "Select Your Villa" -> select-your-villa.webp
-  // Build one card per entry of PORTFOLIO (js/data.js). Change this markup to change every card.
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+  const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+
   $('#grid').innerHTML = PORTFOLIO.map((p, i) => {
     const [name, tag, cat0, what, tools, url, lang, file0] = p, cat = cat0 || 'Other', nn = String(i + 1).padStart(2, '0'), file = file0 || slug(name);
     return `<article class="card" data-cat="${esc(cat)}"><div class="in">
@@ -61,11 +47,9 @@
       <div class="tx"><span class="num">${nn}</span><span class="lg">${esc(lang)}</span><h3>${esc(name)}</h3>${tag ? `<p class="tag">${esc(tag)}</p>` : ''}<p>${esc(what)}</p><p>${esc(tools)}</p>
       <a href="${esc(url)}" target="_blank" rel="noopener">View prototype ↗</a></div></div></article>`;
   }).join('');
-  // If an image file is missing, show the generated placeholder
+
   $$('.th').forEach(img => { img.addEventListener('error', () => placeholder(img)); if (img.complete && !img.naturalWidth) placeholder(img); });
 
-  /* ---------- 3) Smooth scroll ---------- */
-  // Smooth scrolling. vel = current scroll speed (also used to wobble the 3D object)
   let lenis = null, vel = 0;
   if (!reduce) {
     lenis = new Lenis({ lerp: 0.1 });
