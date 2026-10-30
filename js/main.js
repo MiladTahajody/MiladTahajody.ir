@@ -1,35 +1,49 @@
+/* =====================================================================
+   Milad Tahajody - dark/light 3D CV + portfolio (static)
+   Two visual layers: (1) a 3D mesh-network object that morphs into a new shape (Earth globe, then the header icons) and turns
+   with the scroll (WebGL, Three.js; shapes in js/shapes.js), (2) a faint mesh texture behind the whole page (2D canvas).
+   Globals: THREE, gsap, ScrollTrigger, Lenis, PORTFOLIO (js/data.js), SHAPES (js/shapes.js)
+   Parts: 1) helpers + theme toggle  2) portfolio cards (category filter: part 5)  3) smooth scroll  3b) image zoom (lightbox)
+          4) 3D morphing object (NET settings)  4b) background mesh (BG settings)
+          5) scroll animations (panels, timeline, portfolio strip)  6) loader / intro
+   Content lives in index.html (CV text) and js/data.js (portfolio). This file = behaviour only.
+   ===================================================================== */
 (() => {
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const mqSmall = matchMedia('(max-width: 899px)'), isSmall = () => mqSmall.matches;
-
+  const mqSmall = matchMedia('(max-width: 899px)'), isSmall = () => mqSmall.matches; // live breakpoint check (follows resize / rotate / DevTools device toggle)
+  // Tiny selectors: $('.x') = first match, $$('.x') = array of all matches
   const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
-  gsap.registerPlugin(ScrollTrigger);
- 
+  gsap.registerPlugin(ScrollTrigger); // ScrollTrigger drives every scroll-linked animation
+  // After a reload the page always starts at the very top (the browser / ScrollTrigger must not restore the old scroll position)
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
   ScrollTrigger.clearScrollMemory('manual'); scrollTo(0, 0);
 
+  /* ---------- 1) Helpers ---------- */
+  // root = the <html> element; the class 'light' on it switches the colour theme
   const root = document.documentElement, isLight = () => root.classList.contains('light');
-  let sceneTheme = () => {};
-  let bgTheme = () => {};
-
+  let sceneTheme = () => {}; // filled in by the 3D part: re-colours the object when the theme changes
+  let bgTheme = () => {}; // re-reads the colours of the background mesh (set in part 4b)
+  // Light / dark toggle (dark is the default; choice is remembered)
   $('#theme').addEventListener('click', () => {
     root.classList.add('theming'); const light = root.classList.toggle('light');
-    try { localStorage.setItem('theme', light ? 'light' : 'dark'); } catch (e) {}
+    try { localStorage.setItem('theme', light ? 'light' : 'dark'); } catch (e) { /* storage blocked (private mode): the choice is simply not remembered */ }
     sceneTheme(light); bgTheme(); setTimeout(() => root.classList.remove('theming'), 700);
   });
-  
+  // Chips: turns data-tags="A|B|C" into <li> items
   $$('[data-tags]').forEach(ul => { ul.innerHTML = ul.dataset.tags.split('|').map(t => `<li>${t}</li>`).join(''); });
-
+  // Footer year and the project total shown next to the portfolio counter
   $('#year').textContent = new Date().getFullYear();
   $('#tot').textContent = $('#cnt-tot').textContent = PORTFOLIO.length;
 
+  /* ---------- 2) Portfolio cards from js/data.js ---------- */
+  // Generated placeholder shown when images/portfolio/<name>.webp is missing
   function placeholder(img) {
     if (img.dataset.ph) return; img.dataset.ph = 1;
     const c = document.createElement('canvas'); c.width = 640; c.height = 427; const x = c.getContext('2d');
     const g = x.createLinearGradient(0, 0, 640, 400); g.addColorStop(0, '#1a1c24'); g.addColorStop(1, '#2a1409'); x.fillStyle = g; x.fillRect(0, 0, 640, 400);
     x.fillStyle = 'rgba(255,90,31,.85)';
     const box = (a, b, w, h, r) => { x.beginPath(); x.roundRect ? x.roundRect(a, b, w, h, r) : x.rect(a, b, w, h); x.fill(); };
-    const cat = (img.dataset.cat || '').toLowerCase(), k = /mobile|app/.test(cat) ? 'mobile' : /brand|print|logo|sticker|card/.test(cat) ? 'brand' : 'web';
+    const cat = (img.dataset.cat || '').toLowerCase(), k = /mobile|app/.test(cat) ? 'mobile' : /brand|print|logo|sticker|card/.test(cat) ? 'brand' : 'web'; // placeholder shape follows the category
     if (k === 'mobile') [150, 270, 390].forEach((a, n) => box(a - 50, 50 + n % 2 * 20, 100, 230, 16));
     else if (k === 'web') { box(90, 70, 460, 250, 14); x.fillStyle = 'rgba(8,9,12,.55)'; box(110, 95, 120, 205, 8); box(250, 95, 280, 60, 8); box(250, 170, 135, 130, 8); box(395, 170, 135, 130, 8); }
     else { x.beginPath(); x.arc(320, 190, 95, 0, 7); x.fill(); }
@@ -37,9 +51,9 @@
     x.fillText(img.dataset.name + ' · ' + img.getAttribute('src'), 24, 410);
     img.src = c.toDataURL();
   }
-  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
-  const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); // data.js text is plain text, never HTML
+  const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''); // image file name from the title: "Select Your Villa" -> select-your-villa.webp
+  // Build one card per entry of PORTFOLIO (js/data.js). Change this markup to change every card.
   $('#grid').innerHTML = PORTFOLIO.map((p, i) => {
     const [name, tag, cat0, what, tools, url, lang, file0] = p, cat = cat0 || 'Other', nn = String(i + 1).padStart(2, '0'), file = file0 || slug(name);
     return `<article class="card" data-cat="${esc(cat)}"><div class="in">
@@ -47,9 +61,11 @@
       <div class="tx"><span class="num">${nn}</span><span class="lg">${esc(lang)}</span><h3>${esc(name)}</h3>${tag ? `<p class="tag">${esc(tag)}</p>` : ''}<p>${esc(what)}</p><p>${esc(tools)}</p>
       <a href="${esc(url)}" target="_blank" rel="noopener">View prototype ↗</a></div></div></article>`;
   }).join('');
-
+  // If an image file is missing, show the generated placeholder
   $$('.th').forEach(img => { img.addEventListener('error', () => placeholder(img)); if (img.complete && !img.naturalWidth) placeholder(img); });
 
+  /* ---------- 3) Smooth scroll ---------- */
+  // Smooth scrolling. vel = current scroll speed (also used to wobble the 3D object)
   let lenis = null, vel = 0;
   if (!reduce) {
     lenis = new Lenis({ lerp: 0.1 });
@@ -77,7 +93,7 @@
   lb.addEventListener('wheel', e => e.preventDefault(), { passive: false }); // do not scroll the page behind the overlay
 
   /* ---------- 4) 3D object: a dot + line network that morphs between shapes ---------- */
-  // The shapes live in js/shapes.js (already converted to dots + lines): a sphere made of 12 pentagons in the hero, then the header icons as solid 3D objects.
+  // The shapes live in js/shapes.js (already converted to dots + lines): a mesh-network Earth globe in the hero, then the header icons as solid 3D objects.
   // While one shape is on screen it only sways gently (and tilts with the mouse / finger). When you scroll to the next section the
   // dots fly apart, the whole object turns one full circle and the dots settle into the next shape.
   // NET = settings of the 3D object. Change the numbers, save, refresh.
@@ -92,9 +108,9 @@
     scatter: .9        // how far the dots fly apart in the middle of a change (0 = they glide straight to the new shape)
   };
   // Placement per section: [x, y, scale, look]. y = 4 is the vertical centre of the screen.
-  // look: 'all' = every dot bright, 'acc' = the shape's highlighted dots (list "a" in js/shapes.js) glow orange, 'dim' = faded (sits behind the portfolio cards)
+  // look: 'all' = every dot bright, 'acc' = the shape's highlighted dots (list "a" in js/shapes.js) glow orange, 'dim' = faded (used for the portfolio on phones)
   const T = { hero: [3, 4, .9, 'all'], services: [-3, 4, .85, 'acc'], xp: [3, 4, .85, 'acc'], edu: [-3, 4, .85, 'acc'], cert: [3, 4, .85, 'acc'],
-    tools: [-3, 4, .85, 'acc'], skills: [3, 4, .85, 'acc'], work: [0, 4.6, .6, 'dim'], contact: [3.1, 4.5, .65, 'all'] };
+    tools: [-3, 4, .85, 'acc'], skills: [3, 4, .85, 'acc'], work: [0, 4.6, .6, 'acc'], contact: [3.1, 4.5, .65, 'all'] };
   // Sections whose cards sit on one side: the object is scaled and centred in the free column beside these elements, so it never overlaps them (desktop)
   const FIT = { services: '.svc', xp: '.xp-wrap', edu: '.panel', cert: '.panel', tools: '.panel', skills: '.panel' };
   const SC = { spin: 0 };    // spin = extra turn of the object, grows by one full circle (2 x PI) at every change
@@ -144,7 +160,7 @@
     const acc = new Float32Array(NMAX), ea = {};          // acc = orange amount per dot, ea = how visible each shape's lines are (0 - 1)
     names.forEach(nm => { ea[nm] = 0; });
     let target = null, bright = 1, spinTo = 0;
-    // Start state: the dots form a loose ball (golden-angle spread), the intro then pulls them into the sphere
+    // Start state: the dots form a loose ball (golden-angle spread), the intro then pulls them into the globe
     const ga = Math.PI * (3 - Math.sqrt(5));
     for (let i = 0; i < NMAX; i++) {
       const y = 1 - (i + .5) / NMAX * 2, rad = Math.sqrt(1 - y * y), th = ga * i, len = NET.radius * (1 - .35 * Math.random());
@@ -217,14 +233,35 @@
       if (!reduce) { spinTo += dir * Math.PI * 2; gsap.to(SC, { spin: spinTo, duration: d, ease: 'power3.inOut', overwrite: true }); }
     };
 
-    // Free column beside the cards of a section: returns [world x, scale] so the whole object (with sway / perspective margin) stays inside it
-    const fit = (name, x0, s0) => {
-      const sec = $('[data-blob="' + name + '"]'); if (!FIT[name] || !sec) return null;
-      const rs = $$(FIT[name], sec).map(e => e.getBoundingClientRect()).filter(r => r.width > 0); if (!rs.length) return null;
-      const pad = 28, wpp = 6.9156 / innerHeight;                      // wpp = world units per pixel at the object's distance (camera fov 40, z = 9.5)
-      const a = x0 < 0 ? pad : Math.max(...rs.map(r => r.right)) + pad, b = x0 < 0 ? Math.min(...rs.map(r => r.left)) - pad : innerWidth - pad;
+    // Free space for the object (desktop). Returns [world x, world y, scale] so the whole object (with a margin for sway / perspective) stays inside it:
+    // beside the cards (FIT), pushed below the section title if it would touch it, and in the portfolio inside the gap between the title / filter chips and the counter.
+    const absTop = e => { let y = 0; for (; e; e = e.offsetParent) y += e.offsetTop; return y; };
+    const textBox = e => { const r = document.createRange(); r.selectNodeContents(e); return r.getBoundingClientRect(); };
+    const fit = (name, x0, s0) => {                                   // s0 = largest scale allowed
+      const sec = $('[data-blob="' + name + '"]'); if (!sec) return null;
+      const wpp = 6.9156 / innerHeight, reach = NET.radius * (name === 'work' ? 1.08 : 1.18), half = s => reach * s / wpp; // wpp = world units per pixel at the object's distance (fov 40, z = 9.5); half = reach in pixels
+      const rel = e => absTop(e) - absTop(sec);                       // layout position inside the section (ignores the reveal animations)
+      let a, b, top = null, bot = innerHeight - 20, minS = .38;
+      if (name === 'work') {
+        const h2 = $('h2', sec), cnt = $('.count', sec), wrap = $('.hwrap', sec), card = $('#grid .card', sec); if (!h2 || !cnt || !wrap) return null;
+        a = Math.max(textBox(h2).right, ...$$('#filters > *').map(c => c.getBoundingClientRect().right)) + 28; b = cnt.getBoundingClientRect().left - 28;
+        top = 86; bot = rel(card || wrap) - 20; minS = .2; s0 = Math.max(s0, .7); // from the header bar down to the first card (the cards sit lower than the strip they scroll in)
+      } else {
+        if (!FIT[name]) return null;
+        const rs = $$(FIT[name], sec).map(e => e.getBoundingClientRect()).filter(r => r.width > 0); if (!rs.length) return null;
+        a = x0 < 0 ? 28 : Math.max(...rs.map(r => r.right)) + 28; b = x0 < 0 ? Math.min(...rs.map(r => r.left)) - 28 : innerWidth - 28;
+      }
       if (b - a < 80) return null;
-      return [((a + b) / 2 - innerWidth / 2) * wpp, Math.max(.38, Math.min(s0, (b - a) * wpp / 2 / (NET.radius * 1.18)))];
+      const cx = (a + b) / 2; let s = Math.min(s0, (b - a) / 2 * wpp / reach), cy = innerHeight / 2;
+      if (name !== 'work') {                                          // keep clear of the section title (when the object sits under it)
+        const hd = $('h2', sec), t = hd && textBox(hd);
+        if (t && t.right > cx - half(s) && t.left < cx + half(s)) top = rel(hd) + hd.offsetHeight + 28;
+      }
+      if (top !== null) {
+        s = Math.min(s, (bot - top) / 2 * wpp / reach);               // it must also fit in the height that is left
+        cy = name === 'work' ? (top + bot) / 2 : Math.max(cy, top + half(s));
+      }
+      return [(cx - innerWidth / 2) * wpp, 4 - (cy - innerHeight / 2) * wpp, Math.max(minS, s)];
     };
 
     // Move the object when a section becomes active
@@ -233,7 +270,8 @@
       const sm = isSmall(); lookMode = look; dimPhone = sm && name === 'contact'; // on phones the object is nearly hidden over the footer
       if (sm) { x = 0; y = 4.8; s *= .6; }
       else { const halfW = 3.46 * innerWidth / innerHeight; x = Math.sign(x) * Math.min(Math.abs(x), Math.max(0, halfW - 2.8 * s - .1)); } // keep it inside narrow windows
-      const fb = !sm && fit(name, x0, s0); if (fb) { x = fb[0]; s = fb[1]; } // desktop: stay clear of the cards
+      const fb = !sm && fit(name, x0, s0); if (fb) { x = fb[0]; y = fb[1]; s = fb[2]; } // desktop: stay clear of the cards and titles
+      lookMode = name === 'work' && !fb ? 'dim' : look;                  // portfolio: faded if there is no free spot (phones, very narrow windows)
       gsap.to(group.position, { x, y, duration: d, ease: 'power3.inOut', overwrite: true });
       gsap.to(group.scale, { x: s, y: s, z: s, duration: d, ease: 'power3.inOut', overwrite: true });
       if (name !== target) morphTo(name, d); // resize / breakpoint calls only re-place the object, they do not restart the morph
