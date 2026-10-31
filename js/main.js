@@ -1,4 +1,3 @@
-
 (() => {
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const mqSmall = matchMedia('(max-width: 899px)'), isSmall = () => mqSmall.matches;
