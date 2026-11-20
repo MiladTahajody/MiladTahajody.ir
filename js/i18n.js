@@ -1,8 +1,3 @@
-/* js/i18n.js - English / Persian switch ("method A": one page, the language is chosen when the page loads).
-   English is the default. Persian is used when localStorage "lang" is "fa" or the address ends with ?lang=fa (?lang=en goes back).
-   The EN | فا button stores the choice and reloads the page. For Persian this file translates the page texts, switches the page to right-to-left,
-   swaps in the Persian portfolio list and gives js/main.js its own texts (window.I18N). English visitors only run the few lines at the top.
-   Must be loaded after js/data.js and before js/main.js. */
 (() => {
   const root = document.documentElement;
   let lang = 'en';
@@ -22,7 +17,6 @@
   }
   if (lang !== 'fa') return;
 
-  // ---- Persian: page direction, head texts
   root.lang = 'fa'; root.dir = 'rtl';
   const HEAD = {
  "title": "میلاد تهجدی | طراح ارشد UI/UX محصول و مشاور",
@@ -38,7 +32,6 @@
   setMeta('meta[name="twitter:title"]', HEAD.ogt); setMeta('meta[name="twitter:description"]', HEAD.desc); setMeta('meta[name="twitter:image:alt"]', HEAD.imgalt);
   if (sw) { sw.setAttribute('aria-label', 'تغییر زبان به انگلیسی (English)'); sw.title = 'English'; }
 
-  // ---- Persian texts: whole text nodes (same words as the English page, matched after trimming) and attributes
   const NODES = {
  "0": "۰",
  "Loading portfolio": "در حال بارگذاری نمونه‌کارها",
@@ -279,14 +272,13 @@
   const HTMLS = {
  "#work h2": "<em>نمونه کارهای</em> منتخب.",
  ".f-title": "بیایید محصولی <em>کاربردی</em> طراحی کنیم."
-};   // headings where the Persian sentence continues after the highlighted word
+};   
   Object.keys(HTMLS).forEach(sel => { const el = document.querySelector(sel); if (el) el.innerHTML = HTMLS[sel]; });
   document.querySelectorAll('[aria-label],[title],[alt],[data-tags]').forEach(el => ['aria-label', 'title', 'alt', 'data-tags'].forEach(a => {
     const v = el.getAttribute(a); if (v && ATTRS[v]) el.setAttribute(a, ATTRS[v]);
   }));
-  document.querySelectorAll('.n,#cur,#tot,#cnt-cur,#cnt-tot,#pct').forEach(el => { el.textContent = pd(el.textContent); });   // Persian digits
+  document.querySelectorAll('.n,#cur,#tot,#cnt-cur,#cnt-tot,#pct').forEach(el => { el.textContent = pd(el.textContent); });   
 
-  // ---- Persian portfolio list (same order and links as js/data.js; brand names stay Latin; 8th item = image file name)
   window.PORTFOLIO = [
   ["Digital Menus", "کافه‌ها | رستوران‌ها | فست‌فود | نانوایی‌ها و قنادی‌ها", "وب واکنش‌گرا", "وب واکنش‌گرا / موبایل", "ایده - طراحی - توسعه", "https://digitalmenus.ir", "انگلیسی / فارسی", "digital-menus"],
   ["Select Your Villa", "خدمات جامع طراحی ویلا", "وب واکنش‌گرا", "وب واکنش‌گرا / موبایل / پنل داشبورد", "تحلیل - طراحی", "https://xd.adobe.com/view/b9dfe331-6dc2-40b3-ac0d-9e2f4a151242-ec8c/?fullscreen", "انگلیسی", "select-your-villa"],
@@ -314,7 +306,6 @@
   ["Coach Maya", "کارت ویزیت", "برندینگ", "کراس‌فیت / تناسب اندام", "ایده - طراحی - چاپ", "https://www.figma.com/proto/tINKz99Fj7A2Pcii81aD6S/Business-Cards?node-id=1-4&p=f&viewport=303%2C471%2C0.14&t=Ynv7ZQBYzIreSKLJ-1&scaling=contain&content-scaling=fixed&page-id=0%3A1&hotspot-hints=0", "انگلیسی", "coach-maya"]
 ];
 
-  // ---- texts that js/main.js creates itself
   window.I18N = {
     digits: ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'],
     all: 'همه',
