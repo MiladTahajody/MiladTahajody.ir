@@ -232,6 +232,6 @@ img,svg,canvas{max-width:100%}
 @media (min-width:1900px){html{font-size:110%}}
 @media (min-width:2560px){html{font-size:125%}}
 @media (hover:none){.panel:hover,.tile:hover,.btn:hover,.soc a:hover{transform:none}}
-
+/* dark / light switch: the new theme shows through a growing dot pattern (js/main.js draws the pattern into --dots; it stays hidden until the first dots appear) */
 ::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal}
 ::view-transition-new(root){-webkit-mask-image:var(--dots,linear-gradient(transparent,transparent));mask-image:var(--dots,linear-gradient(transparent,transparent));-webkit-mask-size:100% 100%;mask-size:100% 100%;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat}
