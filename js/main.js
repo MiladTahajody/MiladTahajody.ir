@@ -9,35 +9,32 @@
   ScrollTrigger.clearScrollMemory('manual'); scrollTo(0, 0);
 
   const root = document.documentElement, isLight = () => root.classList.contains('light');
-  const RTL = root.dir === 'rtl', ROOT = root.dataset.root || '', I = window.I18N || {};   // Persian page: right-to-left, files one folder up, own texts
-  const QK = (() => { try { const q = sessionStorage.getItem('langQuick') === '1'; sessionStorage.removeItem('langQuick'); return q; } catch (e) { return false; } })();   // true right after the language button: short loader
-  const fd = s => I.digits ? String(s).replace(/\d/g, d => I.digits[d]) : String(s);   // Persian digits on the Persian page
+  const RTL = root.dir === 'rtl', ROOT = root.dataset.root || '', I = window.I18N || {};   
+  const QK = (() => { try { const q = sessionStorage.getItem('langQuick') === '1'; sessionStorage.removeItem('langQuick'); return q; } catch (e) { return false; } })();  
+  const fd = s => I.digits ? String(s).replace(/\d/g, d => I.digits[d]) : String(s);   
   let sceneTheme = () => {};
   let bgTheme = () => {};
 
-  // Dark / light switch: the new theme appears through a grid of dots that grows outwards from the theme button (a halftone wave).
-  // It uses the browser's View Transition: the picture of the new theme is masked by a dot pattern that is drawn on a small canvas every frame
-  // (--dots in css/style.css). Browsers without View Transition, and visitors who asked for reduced motion, get the plain quick colour fade.
   let pouring = false;
   const dotWave = () => {
     const btn = $('#theme').getBoundingClientRect(), ox = btn.left + btn.width / 2, oy = btn.top + btn.height / 2;
-    const W = innerWidth, H = innerHeight, CELL = Math.max(22, Math.min(36, W / 40)), ROW = CELL * .866, S = .5, DUR = 1300;   // dot spacing, row spacing, mask scale, ms
+    const W = innerWidth, H = innerHeight, CELL = Math.max(22, Math.min(36, W / 40)), ROW = CELL * .866, S = .5, DUR = 1300;  
     const cv = document.createElement('canvas'); cv.width = Math.ceil(W * S); cv.height = Math.ceil(H * S);
     const cx = cv.getContext('2d'), dots = [];
-    for (let j = 0, y = -ROW; y < H + ROW; j++, y += ROW) for (let x = (j % 2 ? CELL / 2 : 0) - CELL; x < W + CELL; x += CELL) dots.push([x * S, y * S, Math.hypot(x - ox, y - oy)]);   // every other row is shifted: a halftone pattern
+    for (let j = 0, y = -ROW; y < H + ROW; j++, y += ROW) for (let x = (j % 2 ? CELL / 2 : 0) - CELL; x < W + CELL; x += CELL) dots.push([x * S, y * S, Math.hypot(x - ox, y - oy)]);  
     const maxD = Math.max(...dots.map(d => d[2])), band = maxD * .38, t0 = performance.now();
     const ease = t => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
     return new Promise(done => {
       const frame = now => {
-        const t = Math.min(1, (now - t0) / DUR), front = ease(t) * (maxD + band);   // the wave front, in pixels from the button
+        const t = Math.min(1, (now - t0) / DUR), front = ease(t) * (maxD + band);   
         cx.clearRect(0, 0, cv.width, cv.height); cx.beginPath();
         for (const [x, y, d] of dots) {
-          const k = Math.min(1, Math.max(0, (front - d) / band)); if (k <= 0) continue;   // 0 = no dot yet, 1 = full size
+          const k = Math.min(1, Math.max(0, (front - d) / band)); if (k <= 0) continue;   
           const r = k * k * (3 - 2 * k) * CELL * .62 * S; cx.moveTo(x + r, y); cx.arc(x, y, r, 0, 6.2832);
         }
         cx.fill();
         const url = cv.toDataURL(), im = new Image(); im.src = url;
-        im.decode().then(() => root.style.setProperty('--dots', 'url(' + url + ')')).catch(() => {});   // decoded first, so the mask never flashes
+        im.decode().then(() => root.style.setProperty('--dots', 'url(' + url + ')')).catch(() => {});   
         if (t < 1) requestAnimationFrame(frame); else done();
       };
       requestAnimationFrame(frame);
@@ -57,7 +54,7 @@
     pouring = true;
     const vt = document.startViewTransition(apply);
     vt.ready.then(() => {
-      root.animate({ opacity: [1, 1] }, { duration: 1450, pseudoElement: '::view-transition-new(root)' });   // keeps the transition alive while the dots are drawn
+      root.animate({ opacity: [1, 1] }, { duration: 1450, pseudoElement: '::view-transition-new(root)' });  
       return dotWave();
     }).catch(() => {});
     vt.finished.finally(() => { pouring = false; root.style.removeProperty('--dots'); });
@@ -280,7 +277,7 @@
     };
 
     goScene = (name, first) => {
-      const [x0r, y0, s0, look] = T[name], x0 = RTL ? -x0r : x0r, d = first ? 2.6 : NET.swapTime; let x = x0, y = y0, s = s0;   // Persian page: the 3D object sits on the mirrored side
+      const [x0r, y0, s0, look] = T[name], x0 = RTL ? -x0r : x0r, d = first ? 2.6 : NET.swapTime; let x = x0, y = y0, s = s0;  
       const sm = isSmall(); lookMode = look; dimPhone = sm && name === 'contact';
       if (sm) { x = 0; y = 4.8; s *= .6; }
       else { const halfW = 3.46 * innerWidth / innerHeight; x = Math.sign(x) * Math.min(Math.abs(x), Math.max(0, halfW - 2.8 * s - .1)); }
