@@ -9,19 +9,64 @@
   ScrollTrigger.clearScrollMemory('manual'); scrollTo(0, 0);
 
   const root = document.documentElement, isLight = () => root.classList.contains('light');
+  const RTL = root.dir === 'rtl', ROOT = root.dataset.root || '', I = window.I18N || {};   // Persian page: right-to-left, files one folder up, own texts
+  const QK = (() => { try { const q = sessionStorage.getItem('langQuick') === '1'; sessionStorage.removeItem('langQuick'); return q; } catch (e) { return false; } })();   // true right after the language button: short loader
+  const fd = s => I.digits ? String(s).replace(/\d/g, d => I.digits[d]) : String(s);   // Persian digits on the Persian page
   let sceneTheme = () => {};
   let bgTheme = () => {};
 
+  // Dark / light switch: the new theme appears through a grid of dots that grows outwards from the theme button (a halftone wave).
+  // It uses the browser's View Transition: the picture of the new theme is masked by a dot pattern that is drawn on a small canvas every frame
+  // (--dots in css/style.css). Browsers without View Transition, and visitors who asked for reduced motion, get the plain quick colour fade.
+  let pouring = false;
+  const dotWave = () => {
+    const btn = $('#theme').getBoundingClientRect(), ox = btn.left + btn.width / 2, oy = btn.top + btn.height / 2;
+    const W = innerWidth, H = innerHeight, CELL = Math.max(22, Math.min(36, W / 40)), ROW = CELL * .866, S = .5, DUR = 1300;   // dot spacing, row spacing, mask scale, ms
+    const cv = document.createElement('canvas'); cv.width = Math.ceil(W * S); cv.height = Math.ceil(H * S);
+    const cx = cv.getContext('2d'), dots = [];
+    for (let j = 0, y = -ROW; y < H + ROW; j++, y += ROW) for (let x = (j % 2 ? CELL / 2 : 0) - CELL; x < W + CELL; x += CELL) dots.push([x * S, y * S, Math.hypot(x - ox, y - oy)]);   // every other row is shifted: a halftone pattern
+    const maxD = Math.max(...dots.map(d => d[2])), band = maxD * .38, t0 = performance.now();
+    const ease = t => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    return new Promise(done => {
+      const frame = now => {
+        const t = Math.min(1, (now - t0) / DUR), front = ease(t) * (maxD + band);   // the wave front, in pixels from the button
+        cx.clearRect(0, 0, cv.width, cv.height); cx.beginPath();
+        for (const [x, y, d] of dots) {
+          const k = Math.min(1, Math.max(0, (front - d) / band)); if (k <= 0) continue;   // 0 = no dot yet, 1 = full size
+          const r = k * k * (3 - 2 * k) * CELL * .62 * S; cx.moveTo(x + r, y); cx.arc(x, y, r, 0, 6.2832);
+        }
+        cx.fill();
+        const url = cv.toDataURL(), im = new Image(); im.src = url;
+        im.decode().then(() => root.style.setProperty('--dots', 'url(' + url + ')')).catch(() => {});   // decoded first, so the mask never flashes
+        if (t < 1) requestAnimationFrame(frame); else done();
+      };
+      requestAnimationFrame(frame);
+    });
+  };
   $('#theme').addEventListener('click', () => {
-    root.classList.add('theming'); const light = root.classList.toggle('light');
-    try { localStorage.setItem('theme', light ? 'light' : 'dark'); } catch (e) {  }
-    sceneTheme(light); bgTheme(); setTimeout(() => root.classList.remove('theming'), 700);
+    if (pouring) return;
+    const apply = () => {
+      const light = root.classList.toggle('light');
+      try { localStorage.setItem('theme', light ? 'light' : 'dark'); } catch (e) {  }
+      sceneTheme(light); bgTheme();
+    };
+    if (!document.startViewTransition || reduce) {
+      root.classList.add('theming'); apply(); setTimeout(() => root.classList.remove('theming'), 700);
+      return;
+    }
+    pouring = true;
+    const vt = document.startViewTransition(apply);
+    vt.ready.then(() => {
+      root.animate({ opacity: [1, 1] }, { duration: 1450, pseudoElement: '::view-transition-new(root)' });   // keeps the transition alive while the dots are drawn
+      return dotWave();
+    }).catch(() => {});
+    vt.finished.finally(() => { pouring = false; root.style.removeProperty('--dots'); });
   });
 
   $$('[data-tags]').forEach(ul => { ul.innerHTML = ul.dataset.tags.split('|').map(t => `<li>${t}</li>`).join(''); });
 
-  $('#year').textContent = new Date().getFullYear();
-  $('#tot').textContent = $('#cnt-tot').textContent = PORTFOLIO.length;
+  $('#year').textContent = fd(new Date().getFullYear());
+  $('#tot').textContent = $('#cnt-tot').textContent = fd(PORTFOLIO.length);
 
   function placeholder(img) {
     if (img.dataset.ph) return; img.dataset.ph = 1;
@@ -41,11 +86,11 @@
   const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 
   $('#grid').innerHTML = PORTFOLIO.map((p, i) => {
-    const [name, tag, cat0, what, tools, url, lang, file0] = p, cat = cat0 || 'Other', nn = String(i + 1).padStart(2, '0'), file = file0 || slug(name);
+    const [name, tag, cat0, what, tools, url, lang, file0] = p, cat = cat0 || 'Other', nn = fd(String(i + 1).padStart(2, '0')), file = file0 || slug(name);
     return `<article class="card" data-cat="${esc(cat)}"><div class="in">
-      <img class="th" src="images/portfolio/${esc(file)}.webp" width="1500" height="1000" alt="${esc(name)} preview" data-cat="${esc(cat)}" data-name="${esc(name)}">
+      <img class="th" src="${ROOT}images/portfolio/${esc(file)}.webp" width="1500" height="1000" alt="${esc(I.preview ? I.preview(name) : name + ' preview')}" data-cat="${esc(cat)}" data-name="${esc(name)}">
       <div class="tx"><span class="num">${nn}</span><span class="lg">${esc(lang)}</span><h3>${esc(name)}</h3>${tag ? `<p class="tag">${esc(tag)}</p>` : ''}<p>${esc(what)}</p><p>${esc(tools)}</p>
-      <a href="${esc(url)}" target="_blank" rel="noopener">View prototype ↗</a></div></div></article>`;
+      <a href="${esc(url)}" target="_blank" rel="noopener">${esc(I.proto || 'View prototype ↗')}</a></div></div></article>`;
   }).join('');
 
   $$('.th').forEach(img => { img.addEventListener('error', () => placeholder(img)); if (img.complete && !img.naturalWidth) placeholder(img); });
@@ -68,7 +113,7 @@
     lb.classList.add('open'); lb.setAttribute('aria-hidden', 'false'); lenis && lenis.stop(); $('.lb-close', lb).focus();
   };
   const closeLb = () => { lb.classList.remove('open'); lb.setAttribute('aria-hidden', 'true'); lenis && lenis.start(); };
-  $$('.th').forEach(img => { img.tabIndex = 0; img.setAttribute('role', 'button'); img.setAttribute('aria-label', 'Zoom image: ' + img.dataset.name); img.title = 'Click or tap to zoom'; });
+  $$('.th').forEach(img => { img.tabIndex = 0; img.setAttribute('role', 'button'); img.setAttribute('aria-label', (I.zoom || 'Zoom image: ') + img.dataset.name); img.title = I.zoomTip || 'Click or tap to zoom'; });
   $('#grid').addEventListener('click', e => { const img = e.target.closest('.th'); if (img) openLb(img); });
   $('#grid').addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('th')) { e.preventDefault(); openLb(e.target); } });
   lb.addEventListener('click', closeLb);
@@ -213,7 +258,8 @@
       let a, b, top = null, bot = innerHeight - 20, minS = .38;
       if (name === 'work') {
         const h2 = $('h2', sec), cnt = $('.count', sec), wrap = $('.hwrap', sec), card = $$('#grid .card', sec).find(c => !c.hidden); if (!h2 || !cnt || !wrap) return null;
-        a = Math.max(textBox(h2).right, ...$$('#filters > *').map(c => c.getBoundingClientRect().right)) + 28; b = cnt.getBoundingClientRect().left - 28;
+        if (RTL) { a = cnt.getBoundingClientRect().right + 28; b = Math.min(textBox(h2).left, ...$$('#filters > *').map(c => c.getBoundingClientRect().left)) - 28; }
+        else { a = Math.max(textBox(h2).right, ...$$('#filters > *').map(c => c.getBoundingClientRect().right)) + 28; b = cnt.getBoundingClientRect().left - 28; }
         top = 86; bot = Math.max(top + 120, rel(card || wrap) - 20); minS = .2; s0 = Math.max(s0, .7);
       } else {
         if (!FIT[name]) return null;
@@ -234,7 +280,7 @@
     };
 
     goScene = (name, first) => {
-      const [x0, y0, s0, look] = T[name], d = first ? 2.6 : NET.swapTime; let x = x0, y = y0, s = s0;
+      const [x0r, y0, s0, look] = T[name], x0 = RTL ? -x0r : x0r, d = first ? 2.6 : NET.swapTime; let x = x0, y = y0, s = s0;   // Persian page: the 3D object sits on the mirrored side
       const sm = isSmall(); lookMode = look; dimPhone = sm && name === 'contact';
       if (sm) { x = 0; y = 4.8; s *= .6; }
       else { const halfW = 3.46 * innerWidth / innerHeight; x = Math.sign(x) * Math.min(Math.abs(x), Math.max(0, halfW - 2.8 * s - .1)); }
@@ -287,7 +333,7 @@
 
   const cards = $$('.card'), cur = $('#cur'), workEl = $('.work'), pill = $('#cnt'), pcur = $('#cnt-cur');
   let vis = cards.slice(), workST = null, paintFlow = () => {}, shownNo = '';
-  const pad2 = n => String(n).padStart(2, '0');
+  const pad2 = n => fd(String(n).padStart(2, '0'));
   const setCount = i => {
     const v = pad2(i + 1); if (v === shownNo) return; shownNo = v;
     cur.textContent = pcur.textContent = v;
@@ -310,8 +356,8 @@
     vis = cards.filter(c => { const ok = all || c.dataset.cat === label; c.hidden = !ok; return ok; });
     vis.forEach((c, i) => { $('.num', c).textContent = pad2(i + 1); });
     $$('.fchip', filtersEl).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.f === label)));
-    $('#tot').textContent = $('#cnt-tot').textContent = vis.length;
-    stat.textContent = `Showing ${vis.length} ${vis.length === 1 ? 'project' : 'projects'}${all ? '' : ' in ' + label}`;
+    $('#tot').textContent = $('#cnt-tot').textContent = fd(vis.length);
+    stat.textContent = I.status ? I.status(vis.length, all, label) : `Showing ${vis.length} ${vis.length === 1 ? 'project' : 'projects'}${all ? '' : ' in ' + label}`;
     shownNo = ''; setCount(0);
     if (!byUser) return;
     ScrollTrigger.refresh();
@@ -322,7 +368,7 @@
   };
   ['All', ...new Set(cards.map(c => c.dataset.cat))].forEach(label => {
     const n = label === 'All' ? cards.length : cards.filter(c => c.dataset.cat === label).length, b = document.createElement('button');
-    b.type = 'button'; b.className = 'fchip'; b.dataset.f = label; b.innerHTML = `${esc(label)} <i>${n}</i>`;
+    b.type = 'button'; b.className = 'fchip'; b.dataset.f = label; b.innerHTML = `${esc(label === 'All' && I.all ? I.all : label)} <i>${fd(n)}</i>`;
     b.addEventListener('click', () => applyFilter(label, true)); filtersEl.appendChild(b);
   });
   applyFilter('All', false);
@@ -380,7 +426,7 @@
   if (!reduce) {
 
     ScrollTrigger.create({ trigger: '.xp-wrap', start: 'top 60%', end: 'bottom 60%', onUpdate: s => $('.xp-wrap').style.setProperty('--p', s.progress) });
-    $$('.xp').forEach(el => gsap.from(el, { x: -90, rotationY: -35, opacity: 0, transformPerspective: 1200, transformOrigin: '0 50%', duration: 1.1, ease: 'power3.out', scrollTrigger: { trigger: el, start: 'top 88%' } }));
+    $$('.xp').forEach(el => gsap.from(el, { x: RTL ? 90 : -90, rotationY: RTL ? 35 : -35, opacity: 0, transformPerspective: 1200, transformOrigin: RTL ? '100% 50%' : '0 50%', duration: 1.1, ease: 'power3.out', scrollTrigger: { trigger: el, start: 'top 88%' } }));
 
     $$('h2').forEach(h => gsap.from(h, { y: 60, opacity: 0, clipPath: 'inset(0 0 100% 0)', duration: 1, ease: 'power3.out', scrollTrigger: { trigger: h, start: 'top 88%' } }));
 
@@ -398,9 +444,9 @@
   if (reduce) { loader.remove(); goScene('hero', true); return; }
   const n = { v: 0 };
   gsap.timeline()
-    .to(n, { v: 100, duration: 1.2, ease: 'power2.inOut', onUpdate: () => { $('#pct').textContent = Math.round(n.v); } })
+    .to(n, { v: 100, duration: QK ? .2 : 1.2, ease: 'power2.inOut', onUpdate: () => { $('#pct').textContent = fd(Math.round(n.v)); } })
     .add(() => goScene('hero', true))
-    .to(loader, { clipPath: 'inset(0 0 100% 0)', duration: 1, ease: 'power4.inOut', onComplete: () => loader.remove() })
+    .to(loader, { clipPath: 'inset(0 0 100% 0)', duration: QK ? .5 : 1, ease: 'power4.inOut', onComplete: () => loader.remove() })
     .from('.mask i', { yPercent: 110, rotation: 5, stagger: .12, duration: 1.1, ease: 'power4.out' }, '-=.5')
     .from('.role,.lead,.cta,.who,.hero .tags,.nav,.dots', { y: 30, opacity: 0, stagger: .07, duration: .8 }, '-=.8');
 })();
