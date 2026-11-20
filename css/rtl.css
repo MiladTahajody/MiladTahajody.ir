@@ -1,19 +1,13 @@
-/* css/rtl.css - Persian (right-to-left) mode: Vazirmatn font + fixes for rules in style.css that use left / right.
-   Every rule starts with html[dir="rtl"], so the English page is not affected. js/i18n.js sets lang="fa" dir="rtl" on <html> when Persian is chosen. */
-/* One file, three names: each copy borrows the line metrics of the Latin font it sits next to (Inter / Space Grotesk / JetBrains Mono),
-   so a line of Persian is exactly as tall as the same line in English and no button or card changes height. */
 @font-face{font-family:'VazirI';src:url('../fonts/vazirmatn-arabic-var.woff2') format('woff2');font-weight:100 900;font-display:swap;unicode-range:U+0600-06FF,U+0750-077F,U+200C-200F,U+066A-066C,U+FB50-FDFF,U+FE70-FEFF;ascent-override:96.875%;descent-override:24.121%;line-gap-override:0%}
 @font-face{font-family:'VazirS';src:url('../fonts/vazirmatn-arabic-var.woff2') format('woff2');font-weight:100 900;font-display:swap;unicode-range:U+0600-06FF,U+0750-077F,U+200C-200F,U+066A-066C,U+FB50-FDFF,U+FE70-FEFF;ascent-override:98.4%;descent-override:29.2%;line-gap-override:0%}
 @font-face{font-family:'VazirM';src:url('../fonts/vazirmatn-arabic-var.woff2') format('woff2');font-weight:100 900;font-display:swap;unicode-range:U+0600-06FF,U+0750-077F,U+200C-200F,U+066A-066C,U+FB50-FDFF,U+FE70-FEFF;ascent-override:102%;descent-override:30%;line-gap-override:0%}
-/* Persian type: Latin letters keep the site fonts, Arabic-script letters use Vazirmatn. No letter-spacing (it breaks letter joining).
-   Nothing else about sizes changes: same font sizes, paddings, button heights and positions as the English page. */
+
 html[dir="rtl"]{--display:'Space Grotesk','VazirS',system-ui,sans-serif;--body:'Inter','VazirI',system-ui,sans-serif;--mono:'JetBrains Mono','VazirM',ui-monospace,monospace}
 html[dir="rtl"] *{letter-spacing:0!important}
 html[dir="rtl"] .lang-sw .lsw-l:not(.lsw-fa){letter-spacing:.08em!important}
 html[dir="rtl"] h2{line-height:1.25;max-width:24ch}
-html[dir="rtl"] .mask span{padding-top:.1em;margin-top:-.1em;padding-bottom:.2em;margin-bottom:-.12em}  /* room for Persian dots / tails without changing the block height */
+html[dir="rtl"] .mask span{padding-top:.1em;margin-top:-.1em;padding-bottom:.2em;margin-bottom:-.12em} 
 
-/* mirrored positions (the same distances as English, on the other side) */
 html[dir="rtl"] .logo{direction:ltr}
 html[dir="rtl"] .btn .ic{margin-right:0;margin-left:8px}
 html[dir="rtl"] #bar{transform-origin:100% 50%}
@@ -37,7 +31,6 @@ html[dir="rtl"] .lb-close{right:auto;left:16px}
 html[dir="rtl"] .cnt{right:auto;left:max(14px,env(safe-area-inset-left))}
 @media (max-width:1240px){html[dir="rtl"] .logo{margin-right:0;margin-left:auto}}
 
-/* things that keep their English behaviour: the sideways portfolio strip and the scrolling text band; the cards themselves read right-to-left */
 html[dir="rtl"] .hwrap,html[dir="rtl"] .marquee{direction:ltr}
 html[dir="rtl"] .card{direction:rtl}
 html[dir="rtl"] .fb-mail{direction:ltr;unicode-bidi:isolate}
